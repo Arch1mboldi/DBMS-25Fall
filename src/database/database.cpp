@@ -245,8 +245,9 @@ void database::alter_table_modify_column(const char *table_name, const field_ite
 		return;
 	}
 	
-	std::fprintf(stderr, "[Info] ALTER TABLE MODIFY COLUMN: modifying column `%s` in table `%s`\n", 
-				field->name, table_name);
+	if(!table->alter_table_modify_column(field)) {
+		std::fprintf(stderr, "[Error] ALTER TABLE MODIFY COLUMN: failed to modify column `%s`\n", field->name);
+	}
 }
 
 void database::show_info()

@@ -210,7 +210,17 @@ bool table_manager::alter_table_add_column(const field_item_t *field)
 	// 添加新列到表头
 	int new_col_index = header.col_num++;
 	std::strncpy(header.col_name[new_col_index], field->name, MAX_NAME_LEN);
-	header.col_type[new_col_index] = field->type;
+	// 正确转换 field_type_t (parser) 到 COL_TYPE_* (storage)
+	int col_type;
+	switch(field->type) {
+		case 0: col_type = 1; break;  // INT -> COL_TYPE_INT
+		case 1: col_type = 3; break;  // FLOAT -> COL_TYPE_FLOAT
+		case 2: col_type = 4; break;  // CHAR -> COL_TYPE_CHAR
+		case 3: col_type = 2; break;  // DATE -> COL_TYPE_DATE
+		case 4: col_type = 5; break;  // VARCHAR -> COL_TYPE_VARCHAR
+		default: col_type = 1; break; // 默认 INT
+	}
+	header.col_type[new_col_index] = col_type;
 	header.col_length[new_col_index] = field->width;
 	
 	// 设置列标志
@@ -356,8 +366,90 @@ bool table_manager::alter_table_modify_column(const field_item_t *field)
 {
 	if(!is_open) return false;
 	
-	// TODO: 实现修改列逻辑  
-	std::printf("[Info] ALTER TABLE MODIFY COLUMN: modifying column `%s`\n", field->name);
+	// 查找要修改的列
+	int col_index = -1;
+	for(int i = 0; i < header.col_num; ++i) {
+		if(std::strcmp(header.col_name[i], field->name) == 0) {
+			col_index = i;
+			break;
+		}
+	}
+	
+	if(col_index < 0) {
+		std::fprintf(stderr, "[Error] ALTER TABLE MODIFY COLUMN: column `%s` not found\n", field->name);
+		return false;
+	}
+	
+	// 检查是否为系统列
+	if(std::strcmp(field->name, "__rowid__") == 0) {
+		std::fprintf(stderr, "[Error] ALTER TABLE MODIFY COLUMN: cannot modify system column `%s`\n", field->name);
+		return false;
+	}
+	
+	// 保存旧表头用于回滚
+	table_header_t old_header = header;
+	
+	// 修改列属性（需要正确转换 field_type_t 到 COL_TYPE_*）
+	int new_col_type;
+	switch(field->type) {
+		case 0: new_col_type = 1; break;  // INT -> COL_TYPE_INT
+		case 1: new_col_type = 3; break;  // FLOAT -> COL_TYPE_FLOAT
+		case 2: new_col_type = 4; break;  // CHAR -> COL_TYPE_CHAR
+		case 3: new_col_type = 2; break;  // DATE -> COL_TYPE_DATE
+		case 4: new_col_type = 5; break;  // VARCHAR -> COL_TYPE_VARCHAR
+		default: new_col_type = 1; break; // 默认 INT
+	}
+	header.col_type[col_index] = new_col_type;
+	header.col_length[col_index] = field->width;
+	
+	// 更新列标志
+	if(field->flags & FIELD_FLAG_NOTNULL) {
+		header.flag_notnull |= (1 << col_index);
+	} else {
+		header.flag_notnull &= ~(1 << col_index);
+	}
+	
+	if(field->flags & FIELD_FLAG_PRIMARY) {
+		// 如果修改为主键，需要检查是否有现有主键
+		if(header.flag_primary != 0 && header.flag_primary != (1 << col_index)) {
+			std::fprintf(stderr, "[Error] ALTER TABLE MODIFY COLUMN: only one primary key allowed\n");
+			return false;
+		}
+		header.flag_primary |= (1 << col_index);
+	} else {
+		header.flag_primary &= ~(1 << col_index);
+	}
+	
+	if(field->flags & FIELD_FLAG_UNIQUE) {
+		header.flag_unique |= (1 << col_index);
+	} else {
+		header.flag_unique &= ~(1 << col_index);
+	}
+	
+	// 重新计算列偏移量（如果列长度改变）
+	header.col_offset[0] = 8; // rid + notnull mark
+	for(int i = 1; i < header.col_num; ++i) {
+		header.col_offset[i] = header.col_offset[i-1] + header.col_length[i-1];
+	}
+	
+	// 重新分配临时记录缓冲区
+	allocate_temp_record();
+	
+	// 保存修改后的表头
+	std::string thead = tname + ".thead";
+	std::ofstream ofs(thead, std::ios::binary);
+	if(!ofs) {
+		std::fprintf(stderr, "[Error] ALTER TABLE MODIFY COLUMN: failed to save table header\n");
+		// 回滚表头修改
+		header = old_header;
+		allocate_temp_record();
+		return false;
+	}
+	
+	ofs.write((char*)&header, sizeof(header));
+	ofs.close();
+	
+	std::printf("[Info] ALTER TABLE MODIFY COLUMN: column `%s` modified successfully\n", field->name);
 	return true;
 }
 

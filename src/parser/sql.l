@@ -44,6 +44,7 @@ alter|ALTER      { return ALTER; }
 rename|RENAME    { return RENAME; }
 output|OUTPUT    { return OUTPUT; }
 add|ADD          { return ADD; }
+modify|MODIFY    { return MODIFY; }
 column|COLUMN    { return COLUMN; }
 
 database|DATABASE   { return DATABASE; }

@@ -1,0 +1,17 @@
+[Error] index for column `PersonID' already exists.
+[Info] 3 row(s) inserted, 0 row(s) failed.
+[Info] 3 row(s) selected.
+[Info] 1 row(s) updated, 0 row(s) failed.
+[Info] 3 row(s) selected.
+[Info] 2 row(s) inserted, 0 row(s) failed.
+[Info] 1 row(s) deleted.
+[Info] 4 row(s) selected.
+[Info] 4 row(s) deleted.
+[Info] 0 row(s) selected.
+[Info] 3 row(s) inserted, 0 row(s) failed.
+[Info] 3 row(s) selected.
+[Info] 3 row(s) selected.
+[Info] 3 row(s) selected.
+[Info] 3 row(s) selected.
+[Info] 3 row(s) selected.
+[exit] good bye!

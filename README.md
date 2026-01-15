@@ -2,24 +2,42 @@
 
 TrivialDB是一个简单的数据库管理系统，我们实现了大部分常见的SQL语句和类型。同时支持多表连接、复杂表达式运算、多主键约束、外键约束、CHECK约束、UNIQUE和DEFAULT约束、聚集查询、利用B+树索引的查询优化，同时，我们支持任意长度的VARCHAR类型。
 
-## 编译及运行
+## wsl编译及运行
 
 你需要有支持C++11特性的编译器，以及Bison和Flex两个库。本项目通过CMake来构建，在根目录运行
 
 ```shell
-ccmake .
-```
-
-进行编译选项的设置，之后运行
-
-```shell
-cmake .
+mkdir build
+cd build
+cmake .. 
 make -j8
 ```
 
-进行项目的编译，编译后的可执行程序在`build/trivial_db`目录下。
+进行项目的编译，编译后的可执行程序在`build/bin/trivial_db`目录下。
 
 编译后可以选择在`testcase`目录下运行`python3 run_test.py`运行测试程序。
+
+## Windows 编译说明
+
+WSL 中交叉编译生成 Windows 程序
+
+1. 在 WSL 中安装 mingw-w64：
+```bash
+sudo apt install mingw-w64
+```
+
+2. 在项目根目录手动编译：
+```bash
+mkdir build-win
+cd build-win
+cmake .. \
+    -DCMAKE_TOOLCHAIN_FILE=../mingw-toolchain.cmake \
+    -DCMAKE_BUILD_TYPE=Release
+make -j8
+```
+
+编译完成后会在bin文件夹内生成 `trivial_db.exe` 文件，可直接在 Windows 中运行。
+
 
 ## 系统功能
 

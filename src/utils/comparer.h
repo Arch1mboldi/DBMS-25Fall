@@ -38,6 +38,7 @@ inline int string_comparer(const char *x, const char *y)
 	return std::strcmp(x, y);
 }
 
+#ifndef _WIN32
 inline int strcasecmp(const char *s1, const char *s2)
 {
 	int c1, c2;
@@ -49,6 +50,7 @@ inline int strcasecmp(const char *s1, const char *s2)
 			return c1 - c2;
 	}
 }
+#endif
 
 inline bool strlike(const char *s1, const char *s2)
 {

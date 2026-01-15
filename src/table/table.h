@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "../defs.h"
+#include "../parser/defs.h"
 #include "../btree/btree.h"
 #include "../btree/iterator.h"
 #include "../index/index.h"
@@ -40,7 +41,7 @@ class table_manager
 	void free_check_constraints();
 public:
 	table_manager() : is_open(false), tmp_record(nullptr) { }
-	~table_manager() { if(is_open) close(); }
+	~table_manager() { /* 析构函数不调用close()，因为database::close()已经处理了 */ }
 	bool create(const char *table_name, const table_header_t *header);
 	bool open(const char *table_name);
 	void drop();
@@ -81,6 +82,11 @@ public:
 	void dump_header(FILE *f);
 	void dump_record(FILE *f, int rid);
 	void dump_record(FILE *f, record_manager *rm);
+	
+	// ALTER TABLE operations
+	bool alter_table_add_column(const field_item_t *field);
+	bool alter_table_drop_column(const char *column_name);
+	bool alter_table_modify_column(const field_item_t *field);
 
 private:
 	bool check_constraints(const char *buf);

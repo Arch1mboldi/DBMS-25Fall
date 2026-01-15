@@ -291,19 +291,36 @@ table_extra_option : PRIMARY KEY '(' IDENTIFIER ')' {
 alter_table_operation : ADD COLUMN table_field {
                        alter_info_t *info = (alter_info_t*)malloc(sizeof(alter_info_t));
                        info->operation = ALTER_OPERATION_ADD_COLUMN;
-                       info->field_info = $3;
+                       // 复制field_item_t以避免内存管理冲突
+                       field_item_t *src_field = $3;
+                       info->field_info = (field_item_t*)malloc(sizeof(field_item_t));
+                       info->field_info->name = strdup(src_field->name);
+                       info->field_info->type = src_field->type;
+                       info->field_info->width = src_field->width;
+                       info->field_info->flags = src_field->flags;
+                       info->field_info->default_value = NULL; // ALTER时不需要默认值
+                       info->field_info->next = NULL;
                        $$ = info;
                    }
                    | DROP COLUMN IDENTIFIER {
                        alter_info_t *info = (alter_info_t*)malloc(sizeof(alter_info_t));
                        info->operation = ALTER_OPERATION_DROP_COLUMN;
-                       info->column_name = $3;
+                       info->column_name = strdup($3);
+                       info->field_info = NULL;
                        $$ = info;
                    }
                    | MODIFY COLUMN table_field {
                        alter_info_t *info = (alter_info_t*)malloc(sizeof(alter_info_t));
                        info->operation = ALTER_OPERATION_MODIFY_COLUMN;
-                       info->field_info = $3;
+                       // 复制field_item_t以避免内存管理冲突
+                       field_item_t *src_field = $3;
+                       info->field_info = (field_item_t*)malloc(sizeof(field_item_t));
+                       info->field_info->name = strdup(src_field->name);
+                       info->field_info->type = src_field->type;
+                       info->field_info->width = src_field->width;
+                       info->field_info->flags = src_field->flags;
+                       info->field_info->default_value = NULL;
+                       info->field_info->next = NULL;
                        $$ = info;
                    }
                    ;

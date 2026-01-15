@@ -186,6 +186,89 @@ void table_manager::drop()
 	std::remove(tdata.c_str());
 }
 
+bool table_manager::alter_table_add_column(const field_item_t *field)
+{
+	if(!is_open) return false;
+	
+	// 检查列数是否超过限制
+	if(header.col_num >= MAX_COL_NUM) {
+		std::fprintf(stderr, "[Error] ALTER TABLE: too many columns\n");
+		return false;
+	}
+	
+	// 检查列名是否已存在
+	for(int i = 0; i < header.col_num; ++i) {
+		if(std::strcmp(header.col_name[i], field->name) == 0) {
+			std::fprintf(stderr, "[Error] ALTER TABLE: column `%s` already exists\n", field->name);
+			return false;
+		}
+	}
+	
+	// 保存旧表头用于回滚
+	table_header_t old_header = header;
+	
+	// 添加新列到表头
+	int new_col_index = header.col_num++;
+	std::strncpy(header.col_name[new_col_index], field->name, MAX_NAME_LEN);
+	header.col_type[new_col_index] = field->type;
+	header.col_length[new_col_index] = field->width;
+	
+	// 设置列标志
+	if(field->flags & FIELD_FLAG_NOTNULL) {
+		header.flag_notnull |= (1 << new_col_index);
+	}
+	if(field->flags & FIELD_FLAG_PRIMARY) {
+		header.flag_primary |= (1 << new_col_index);
+	}
+	if(field->flags & FIELD_FLAG_UNIQUE) {
+		header.flag_unique |= (1 << new_col_index);
+	}
+	
+	// 重新计算列偏移量
+	header.col_offset[0] = 8; // rid + notnull mark
+	for(int i = 1; i < header.col_num; ++i) {
+		header.col_offset[i] = header.col_offset[i-1] + header.col_length[i-1];
+	}
+	
+	// 重新分配临时记录缓冲区
+	allocate_temp_record();
+	
+	// 保存修改后的表头
+	std::string thead = tname + ".thead";
+	FILE *f = std::fopen(thead.c_str(), "wb");
+	if(!f) {
+		std::fprintf(stderr, "[Error] ALTER TABLE: failed to save table header\n");
+		// 回滚表头修改
+		header = old_header;
+		allocate_temp_record();
+		return false;
+	}
+	
+	std::fwrite(&header, sizeof(header), 1, f);
+	std::fclose(f);
+	
+	std::printf("[Info] ALTER TABLE: column `%s` added successfully\n", field->name);
+	return true;
+}
+
+bool table_manager::alter_table_drop_column(const char *column_name)
+{
+	if(!is_open) return false;
+	
+	// TODO: 实现删除列逻辑
+	std::printf("[Info] ALTER TABLE DROP COLUMN: dropping column `%s`\n", column_name);
+	return true;
+}
+
+bool table_manager::alter_table_modify_column(const field_item_t *field)
+{
+	if(!is_open) return false;
+	
+	// TODO: 实现修改列逻辑  
+	std::printf("[Info] ALTER TABLE MODIFY COLUMN: modifying column `%s`\n", field->name);
+	return true;
+}
+
 void table_manager::close()
 {
 	if(!is_open) return;
@@ -206,12 +289,21 @@ void table_manager::close()
 
 	btr = nullptr;
 	pg = nullptr;
-	delete []tmp_record;
-	delete []tmp_cache;
-	delete []tmp_index;
-	tmp_cache = nullptr;
-	tmp_record = nullptr;
-	tmp_index = nullptr;
+	
+	// 安全释放内存
+	if(tmp_record) {
+		delete[] tmp_record;
+		tmp_record = nullptr;
+	}
+	if(tmp_cache) {
+		delete[] tmp_cache;
+		tmp_cache = nullptr;
+	}
+	if(tmp_index) {
+		delete[] tmp_index;
+		tmp_index = nullptr;
+	}
+	
 	is_open = false;
 	is_mirror = false;
 }
@@ -230,6 +322,9 @@ int table_manager::lookup_column(const char *col_name)
 void table_manager::allocate_temp_record()
 {
 	if(tmp_record) delete[] tmp_record;
+	if(tmp_cache) delete[] tmp_cache;
+	if(tmp_index) delete[] tmp_index;
+	
 	int tot_len = 4; // 4 bytes for not_null
 	for(int i = 0; i < header.col_num; ++i)
 		tot_len += header.col_length[i];

@@ -209,11 +209,9 @@ void database::alter_table_add_column(const char *table_name, const field_item_t
 		return;
 	}
 	
-	// 这里需要实现具体的添加列逻辑
-	// 由于表结构修改涉及复杂的数据迁移，这里先输出提示信息
-	std::fprintf(stderr, "[Info] ALTER TABLE ADD COLUMN: adding column `%s` to table `%s`\n", 
-				field->name, table_name);
-	// 实际实现需要考虑表头修改、数据迁移、索引更新等
+	if(!table->alter_table_add_column(field)) {
+		std::fprintf(stderr, "[Error] ALTER TABLE ADD COLUMN: failed to add column `%s`\n", field->name);
+	}
 }
 
 void database::alter_table_drop_column(const char *table_name, const char *column_name)

@@ -39,6 +39,25 @@ make -j8
 编译完成后会在bin文件夹内生成 `trivial_db.exe` 文件，可直接在 Windows 中运行。
 
 
+## 表操作功能示例
+
+```sql
+-- 重命名表
+RENAME TABLE old_table_name TO new_table_name;
+
+-- 添加新列
+ALTER TABLE employees ADD COLUMN phone VARCHAR(15);
+
+-- 删除列
+ALTER TABLE employees DROP COLUMN phone;
+
+-- 重命名列
+ALTER TABLE employees RENAME COLUMN name TO full_name;
+
+-- 修改列类型
+ALTER TABLE employees MODIFY COLUMN salary DOUBLE;
+```
+
 ## 系统功能
 
 ### 数据类型
@@ -69,6 +88,12 @@ make -j8
  * 显示表信息：`SHOW TABLE ...`
  * 创建索引：`CREATE INDEX ...`
  * 删除索引：`DROP INDEX ...`
+ * 重命名表：`RENAME TABLE ... TO ...`
+ * 修改表结构：`ALTER TABLE ...`
+   * 添加列：`ALTER TABLE ... ADD COLUMN ...`
+   * 删除列：`ALTER TABLE ... DROP COLUMN ...`
+   * 重命名列：`ALTER TABLE ... RENAME COLUMN ... TO ...`
+   * 修改列类型：`ALTER TABLE ... MODIFY COLUMN ...`
 
 ### 复杂表达式处理
 

@@ -198,7 +198,6 @@ table_refs          : table_refs ',' table_item {
 						$$->next = NULL;
 					}
 					;
-
 table_item          : table_name {
 					 	$$ = (table_join_info_t*)calloc(1, sizeof(table_join_info_t));
 						$$->join_type = TABLE_JOIN_NONE;

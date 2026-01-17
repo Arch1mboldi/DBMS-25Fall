@@ -13,9 +13,9 @@ cmake ..
 make -j8
 ```
 
-进行项目的编译，编译后的可执行程序在`build/bin/trivial_db`目录下。
+进行项目的编译，编译后的可执行程序在`build/bin`目录下。
+运行./trivial_db即可运行项目
 
-编译后可以选择在`testcase`目录下运行`python3 run_test.py`运行测试程序。
 
 ## Windows 编译说明
 
@@ -38,6 +38,9 @@ make -j8
 
 编译完成后会在bin文件夹内生成 `trivial_db.exe` 文件，可直接在 Windows 中运行。
 
+## 图形用户界面运行
+
+进入src/gui目录，运行`python3 trivialdb_gui.py`即可启动图形用户界面。
 
 ## 表操作功能示例
 

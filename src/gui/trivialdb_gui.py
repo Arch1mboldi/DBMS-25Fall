@@ -55,29 +55,30 @@ class TrivialDBGUI:
         # 数据库选择/创建
         ttk.Button(nav_frame, text="创建数据库", command=self.create_database).grid(row=0, column=0, pady=5, sticky=tk.EW)
         ttk.Button(nav_frame, text="选择数据库", command=self.select_database).grid(row=1, column=0, pady=5, sticky=tk.EW)
+        ttk.Button(nav_frame, text="删除数据库", command=self.drop_database).grid(row=2, column=0, pady=5, sticky=tk.EW)
         
         # 表操作
-        ttk.Separator(nav_frame, orient='horizontal').grid(row=2, column=0, pady=10, sticky=tk.EW)
-        ttk.Label(nav_frame, text="表操作").grid(row=3, column=0, pady=5)
+        ttk.Separator(nav_frame, orient='horizontal').grid(row=3, column=0, pady=10, sticky=tk.EW)
+        ttk.Label(nav_frame, text="表操作").grid(row=4, column=0, pady=5)
         
-        ttk.Button(nav_frame, text="创建表", command=self.create_table).grid(row=4, column=0, pady=2, sticky=tk.EW)
-        ttk.Button(nav_frame, text="显示表结构", command=self.show_table_structure).grid(row=5, column=0, pady=2, sticky=tk.EW)
-        ttk.Button(nav_frame, text="重命名表", command=self.rename_table).grid(row=6, column=0, pady=2, sticky=tk.EW)
-        ttk.Button(nav_frame, text="修改表结构", command=self.alter_table).grid(row=7, column=0, pady=2, sticky=tk.EW)
-        ttk.Button(nav_frame, text="删除表", command=self.drop_table).grid(row=8, column=0, pady=2, sticky=tk.EW)
-        
+        ttk.Button(nav_frame, text="创建表", command=self.create_table).grid(row=5, column=0, pady=2, sticky=tk.EW)
+        ttk.Button(nav_frame, text="显示表结构", command=self.show_table_structure).grid(row=6, column=0, pady=2, sticky=tk.EW)
+        ttk.Button(nav_frame, text="重命名表", command=self.rename_table).grid(row=7, column=0, pady=2, sticky=tk.EW)
+        ttk.Button(nav_frame, text="修改表结构", command=self.alter_table).grid(row=8, column=0, pady=2, sticky=tk.EW)
+        ttk.Button(nav_frame, text="删除表", command=self.drop_table).grid(row=9, column=0, pady=2, sticky=tk.EW)
         # 数据操作
-        ttk.Separator(nav_frame, orient='horizontal').grid(row=9, column=0, pady=10, sticky=tk.EW)
-        ttk.Label(nav_frame, text="数据操作").grid(row=10, column=0, pady=5)
+        ttk.Separator(nav_frame, orient='horizontal').grid(row=10, column=0, pady=10, sticky=tk.EW)
+        ttk.Label(nav_frame, text="数据操作").grid(row=11, column=0, pady=5)
         
-        ttk.Button(nav_frame, text="插入数据", command=self.insert_data).grid(row=11, column=0, pady=2, sticky=tk.EW)
-        ttk.Button(nav_frame, text="查询数据", command=self.query_data).grid(row=12, column=0, pady=2, sticky=tk.EW)
-        ttk.Button(nav_frame, text="更新数据", command=self.update_data).grid(row=13, column=0, pady=2, sticky=tk.EW)
-        ttk.Button(nav_frame, text="删除数据", command=self.delete_data).grid(row=14, column=0, pady=2, sticky=tk.EW)
+        ttk.Button(nav_frame, text="插入数据", command=self.insert_data).grid(row=12, column=0, pady=2, sticky=tk.EW)
+        ttk.Button(nav_frame, text="查询数据", command=self.query_data).grid(row=13, column=0, pady=2, sticky=tk.EW)
+        ttk.Button(nav_frame, text="更新数据", command=self.update_data).grid(row=14, column=0, pady=2, sticky=tk.EW)
+        ttk.Button(nav_frame, text="删除数据", command=self.delete_data).grid(row=15, column=0, pady=2, sticky=tk.EW)
         
-        # SQL命令行
-        ttk.Separator(nav_frame, orient='horizontal').grid(row=15, column=0, pady=10, sticky=tk.EW)
-        ttk.Button(nav_frame, text="SQL命令行", command=self.open_sql_console).grid(row=16, column=0, pady=5, sticky=tk.EW)
+        # SQL命令行和退出
+        ttk.Separator(nav_frame, orient='horizontal').grid(row=16, column=0, pady=10, sticky=tk.EW)
+        ttk.Button(nav_frame, text="SQL命令行", command=self.open_sql_console).grid(row=17, column=0, pady=5, sticky=tk.EW)
+        ttk.Button(nav_frame, text="退出程序", command=self.quit_app).grid(row=18, column=0, pady=5, sticky=tk.EW)
         
         # 状态栏
         self.status_var = tk.StringVar(value="就绪")
@@ -94,10 +95,10 @@ class TrivialDBGUI:
         self.result_text = scrolledtext.ScrolledText(display_frame, width=80, height=30)
         self.result_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        # 数据库信息显示
+        # 数据库信息显示（移到右下角）
         self.db_info_var = tk.StringVar(value="未选择数据库")
-        db_info_label = ttk.Label(main_frame, textvariable=self.db_info_var)
-        db_info_label.grid(row=0, column=1, sticky=tk.W, padx=(0, 10))
+        db_info_label = ttk.Label(main_frame, textvariable=self.db_info_var, font=("Arial", 10, "bold"))
+        db_info_label.grid(row=2, column=1, sticky=tk.SE, padx=10, pady=10)
     
     def execute_sql(self, sql_command, require_db=True):
         """执行SQL命令并返回结果"""
@@ -378,6 +379,47 @@ class TrivialDBGUI:
         ttk.Button(btn_frame, text="执行", command=on_alter).pack(side=tk.LEFT, padx=5)
         ttk.Button(btn_frame, text="取消", command=self.alter_dialog.destroy).pack(side=tk.LEFT, padx=5)
     
+    def drop_database(self):
+        """删除数据库对话框"""
+        def on_drop():
+            db_name = name_entry.get().strip()
+            if not db_name:
+                messagebox.showerror("错误", "数据库名称不能为空")
+                return
+                
+            # 确认对话框
+            if not messagebox.askyesno("确认", f"确定要删除数据库 {db_name} 吗？此操作不可恢复！"):
+                return
+                
+            sql = f"DROP DATABASE {db_name};"
+            result = self.execute_sql(sql, require_db=False)
+            
+            if result and "Error" not in result:
+                if self.current_db == db_name:
+                    self.current_db = None
+                    self.db_info_var.set("未选择数据库")
+                self.status_var.set(f"数据库 {db_name} 删除成功")
+                dialog.destroy()
+        
+        dialog = tk.Toplevel(self.root)
+        dialog.title("删除数据库")
+        dialog.geometry("300x150")
+        
+        ttk.Label(dialog, text="数据库名称:").pack(pady=10)
+        name_entry = ttk.Entry(dialog, width=20)
+        name_entry.pack(pady=5)
+        
+        btn_frame = ttk.Frame(dialog)
+        btn_frame.pack(pady=10)
+        
+        ttk.Button(btn_frame, text="删除", command=on_drop).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="取消", command=dialog.destroy).pack(side=tk.LEFT, padx=5)
+    
+    def quit_app(self):
+        """退出应用程序"""
+        if messagebox.askyesno("退出", "确定要退出TrivialDB吗？"):
+            self.root.destroy()
+    
     def drop_table(self):
         """删除表对话框"""
         def on_drop():
@@ -456,16 +498,23 @@ class TrivialDBGUI:
     def query_data(self):
         """查询数据对话框"""
         def on_query():
-            table_name = table_entry.get().strip()
+            tables = tables_entry.get().strip()
+            columns = columns_entry.get().strip()
             condition = condition_entry.get().strip()
+            group_by = group_by_entry.get().strip()
+            having = having_entry.get().strip()
             
-            if not table_name:
+            if not tables:
                 messagebox.showerror("错误", "表名不能为空")
                 return
                 
-            sql = f"SELECT * FROM {table_name}"
+            sql = f"SELECT {columns if columns else '*'} FROM {tables}"
             if condition:
                 sql += f" WHERE {condition}"
+            if group_by:
+                sql += f" GROUP BY {group_by}"
+            if having:
+                sql += f" HAVING {having}"
             sql += ";"
             
             result = self.execute_sql(sql)
@@ -474,16 +523,28 @@ class TrivialDBGUI:
                 dialog.destroy()
         
         dialog = tk.Toplevel(self.root)
-        dialog.title("查询数据")
-        dialog.geometry("400x200")
+        dialog.title("高级查询")
+        dialog.geometry("500x400")
         
-        ttk.Label(dialog, text="表名:").pack(pady=5)
-        table_entry = ttk.Entry(dialog, width=30)
-        table_entry.pack(pady=5)
+        ttk.Label(dialog, text="表名 (多表用逗号分隔):").pack(pady=5)
+        tables_entry = ttk.Entry(dialog, width=40)
+        tables_entry.pack(pady=5)
         
-        ttk.Label(dialog, text="条件 (可选):").pack(pady=5)
-        condition_entry = ttk.Entry(dialog, width=30)
+        ttk.Label(dialog, text="列名 (可选，用逗号分隔，支持COUNT(), AVG(), MAX(), MIN()等):").pack(pady=5)
+        columns_entry = ttk.Entry(dialog, width=40)
+        columns_entry.pack(pady=5)
+        
+        ttk.Label(dialog, text="条件 (WHERE子句):").pack(pady=5)
+        condition_entry = ttk.Entry(dialog, width=40)
         condition_entry.pack(pady=5)
+        
+        ttk.Label(dialog, text="分组依据 (GROUP BY子句):").pack(pady=5)
+        group_by_entry = ttk.Entry(dialog, width=40)
+        group_by_entry.pack(pady=5)
+        
+        ttk.Label(dialog, text="分组条件 (HAVING子句):").pack(pady=5)
+        having_entry = ttk.Entry(dialog, width=40)
+        having_entry.pack(pady=5)
         
         btn_frame = ttk.Frame(dialog)
         btn_frame.pack(pady=10)

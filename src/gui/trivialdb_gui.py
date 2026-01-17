@@ -35,6 +35,14 @@ class TrivialDBGUI:
         
         # 初始化界面
         self.setup_ui()
+    
+    def center_dialog(self, dialog, width=400, height=300):
+        """将对话框居中显示在主窗口中心"""
+        dialog.update_idletasks()
+        # 获取主窗口位置和大小
+        x = self.root.winfo_x() + (self.root.winfo_width() - width) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - height) // 2
+        dialog.geometry(f"{width}x{height}+{x}+{y}")
         
     def setup_ui(self):
         """设置主界面布局"""
@@ -154,6 +162,7 @@ class TrivialDBGUI:
         dialog = tk.Toplevel(self.root)
         dialog.title("创建数据库")
         dialog.geometry("300x150")
+        self.center_dialog(dialog, 300, 150)
         
         ttk.Label(dialog, text="数据库名称:").pack(pady=10)
         name_entry = ttk.Entry(dialog, width=20)
@@ -188,6 +197,7 @@ class TrivialDBGUI:
         dialog = tk.Toplevel(self.root)
         dialog.title("选择数据库")
         dialog.geometry("300x150")
+        self.center_dialog(dialog, 300, 150)
         
         ttk.Label(dialog, text="数据库名称:").pack(pady=10)
         name_entry = ttk.Entry(dialog, width=20)
@@ -219,6 +229,7 @@ class TrivialDBGUI:
         dialog = tk.Toplevel(self.root)
         dialog.title("创建表")
         dialog.geometry("400x300")
+        self.center_dialog(dialog, 400, 300)
         
         ttk.Label(dialog, text="表名:").pack(pady=5)
         name_entry = ttk.Entry(dialog, width=30)
@@ -236,13 +247,32 @@ class TrivialDBGUI:
         ttk.Button(btn_frame, text="取消", command=dialog.destroy).pack(side=tk.LEFT, padx=5)
     
     def show_table_structure(self):
-        """显示表结构"""
-        table_name = simpledialog.askstring("显示表结构", "请输入表名:")
-        if table_name:
-            sql = f"SHOW TABLE {table_name};"
-            result = self.execute_sql(sql)
-            if result:
-                self.display_result(result)
+        """显示表结构对话框"""
+        # 创建自定义对话框
+        dialog = tk.Toplevel(self.root)
+        dialog.title("显示表结构")
+        dialog.geometry("400x200")
+        self.center_dialog(dialog, 400, 200)
+        
+        ttk.Label(dialog, text="请输入表名:").pack(pady=20)
+        table_entry = ttk.Entry(dialog, width=30)
+        table_entry.pack(pady=10)
+        
+        def on_show():
+            table_name = table_entry.get().strip()
+            if table_name:
+                sql = f"SHOW TABLE {table_name};"
+                result = self.execute_sql(sql)
+                if result:
+                    self.display_result(result)
+                dialog.destroy()
+            else:
+                messagebox.showwarning("警告", "请输入表名")
+        
+        btn_frame = ttk.Frame(dialog)
+        btn_frame.pack(pady=20)
+        ttk.Button(btn_frame, text="显示", command=on_show).pack(side=tk.LEFT, padx=10)
+        ttk.Button(btn_frame, text="取消", command=dialog.destroy).pack(side=tk.LEFT, padx=10)
     
     def rename_table(self):
         """重命名表"""
@@ -264,6 +294,7 @@ class TrivialDBGUI:
         dialog = tk.Toplevel(self.root)
         dialog.title("重命名表")
         dialog.geometry("300x200")
+        self.center_dialog(dialog, 300, 200)
         
         ttk.Label(dialog, text="原表名:").pack(pady=5)
         old_entry = ttk.Entry(dialog, width=20)
@@ -290,6 +321,7 @@ class TrivialDBGUI:
         self.alter_dialog = tk.Toplevel(self.root)
         self.alter_dialog.title("修改表结构")
         self.alter_dialog.geometry("400x400")
+        self.center_dialog(self.alter_dialog, 400, 400)
         
         # 表名输入
         ttk.Label(self.alter_dialog, text="表名:").pack(pady=5)
@@ -404,6 +436,7 @@ class TrivialDBGUI:
         dialog = tk.Toplevel(self.root)
         dialog.title("删除数据库")
         dialog.geometry("300x150")
+        self.center_dialog(dialog, 300, 150)
         
         ttk.Label(dialog, text="数据库名称:").pack(pady=10)
         name_entry = ttk.Entry(dialog, width=20)
@@ -442,6 +475,7 @@ class TrivialDBGUI:
         dialog = tk.Toplevel(self.root)
         dialog.title("删除表")
         dialog.geometry("300x150")
+        self.center_dialog(dialog, 300, 150)
         
         ttk.Label(dialog, text="表名:").pack(pady=10)
         name_entry = ttk.Entry(dialog, width=20)
@@ -479,6 +513,7 @@ class TrivialDBGUI:
         dialog = tk.Toplevel(self.root)
         dialog.title("插入数据")
         dialog.geometry("400x300")
+        self.center_dialog(dialog, 400, 300)
         
         ttk.Label(dialog, text="表名:").pack(pady=5)
         table_entry = ttk.Entry(dialog, width=30)
@@ -525,6 +560,7 @@ class TrivialDBGUI:
         dialog = tk.Toplevel(self.root)
         dialog.title("高级查询")
         dialog.geometry("500x400")
+        self.center_dialog(dialog, 500, 400)
         
         ttk.Label(dialog, text="表名 (多表用逗号分隔):").pack(pady=5)
         tables_entry = ttk.Entry(dialog, width=40)
@@ -576,6 +612,7 @@ class TrivialDBGUI:
         dialog = tk.Toplevel(self.root)
         dialog.title("更新数据")
         dialog.geometry("400x250")
+        self.center_dialog(dialog, 400, 250)
         
         ttk.Label(dialog, text="表名:").pack(pady=5)
         table_entry = ttk.Entry(dialog, width=30)
@@ -622,6 +659,7 @@ class TrivialDBGUI:
         dialog = tk.Toplevel(self.root)
         dialog.title("删除数据")
         dialog.geometry("400x200")
+        self.center_dialog(dialog, 400, 200)
         
         ttk.Label(dialog, text="表名:").pack(pady=5)
         table_entry = ttk.Entry(dialog, width=30)
@@ -649,6 +687,12 @@ class SQLConsole(tk.Toplevel):
         self.gui = gui
         self.title("SQL控制台")
         self.geometry("600x400")
+        
+        # 居中显示
+        parent_geo = parent.geometry()
+        pw, ph = map(int, parent_geo.split('+')[0].split('x'))
+        px, py = map(int, parent_geo.split('+')[1:])
+        self.geometry(f"600x400+{px + (pw-600)//2}+{py + (ph-400)//2}")
         
         # SQL输入区域
         ttk.Label(self, text="输入SQL命令:").pack(pady=5)

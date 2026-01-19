@@ -146,7 +146,10 @@ bool table_manager::open(const char *table_name)
 	std::string tdata = "../../database/" + tname + ".tdata";
 
 	std::ifstream ifs(thead, std::ios::binary);
-	ifs.read((char*)&header, sizeof(header));
+	if(!ifs || !ifs.read((char*)&header, sizeof(header))) {
+		std::fprintf(stderr, "[Error] Failed to read table header file: %s\n", thead.c_str());
+		return false;
+	}
 	pg = std::make_shared<pager>(tdata.c_str());
 	btr = std::make_shared<int_btree>(
 			pg.get(), header.index_root[header.main_index]);
@@ -178,7 +181,7 @@ bool table_manager::create(const char *table_name, const table_header_t *header)
 	// 立即保存表头文件
 	std::ofstream ofs(thead, std::ios::binary);
 	if(ofs) {
-		ofs.write((char*)&header, sizeof(header));
+		ofs.write((char*)&this->header, sizeof(this->header));
 		ofs.close();
 	}
 

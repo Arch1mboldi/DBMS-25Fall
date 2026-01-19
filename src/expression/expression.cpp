@@ -601,4 +601,51 @@ std::string expression::to_string(const expr_node_t *expr)
 		return str + to_string(expr->right);
 	}
 }
+expression expression::copy(const expression& other)
+{
+	expression ret;
+	ret.type = other.type;
 
+	switch (other.type)
+	{
+	case TERM_STRING:
+		if (other.val_s)
+		{
+			// 深拷贝字符串
+			size_t len = std::strlen(other.val_s);
+			ret.val_s = new char[len + 1];
+			std::strcpy(ret.val_s, other.val_s);
+		}
+		else
+		{
+			ret.val_s = nullptr;
+		}
+		break;
+	case TERM_INT:
+		ret.val_i = other.val_i;
+		break;
+	case TERM_FLOAT:
+		ret.val_f = other.val_f;
+		break;
+	case TERM_BOOL:
+		ret.val_b = other.val_b;
+		break;
+	case TERM_DATE:
+		ret.val_i = other.val_i;
+		break;
+	case TERM_NULL:
+		// nothing to copy
+		break;
+	case TERM_LITERAL_LIST:
+		// 注意：这里只是浅拷贝了链表指针，因为通常 literal_list 在表达式解析后是只读的
+		// 如果后续有修改需求，需要改为深拷贝链表
+		ret.literal_list = other.literal_list;
+		break;
+	default:
+		// 不应该发生
+		assert(0);
+		break;
+	}
+
+	return ret;
+}

@@ -33,7 +33,13 @@ void yyerror(const char *s);
 	struct expr_node_t        *expr;
 	struct rename_info_t      *rename_info;
 	struct alter_info_t       *alter_info;
+	struct order_by_item_t *order_by_item;
 }
+
+%type <list> order_by_list
+%type <order_by_item> order_by_item
+%type <order_by_item> opt_order_by
+%type <val_i> opt_asc_desc
 
 %token TRUE FALSE NULL_TOKEN MIN MAX SUM AVG COUNT
 %token LIKE IS OR AND NOT NEQ GEQ LEQ
@@ -56,13 +62,13 @@ void yyerror(const char *s);
 %type <val_i> INT_LITERAL
 
 %type <val_i> field_type field_width field_flag field_flags
+%type <val_i> opt_distinct
 %type <val_s> table_name database_name
 %type <val_s> create_database_stmt use_database_stmt drop_database_stmt show_database_stmt 
 %type <val_s> drop_table_stmt show_table_stmt
 %type <rename_info> rename_table_stmt
 %type <alter_info> alter_table_stmt
 %type <alter_info> alter_table_operation
-%type <val_s> old_column_name new_column_name
 
 %type <field_items> table_field table_fields
 %type <table_def> create_table_stmt
@@ -180,12 +186,18 @@ update_stmt         : UPDATE table_name SET column_ref '=' expr where_clause {
 					}
 					;
 
-select_stmt         : SELECT select_expr_list_s FROM table_refs where_clause {
-					 	$$ = (select_info_t*)malloc(sizeof(select_info_t));
-						$$->tables = $4;
-						$$->exprs  = $2;
-						$$->where  = $5;
-					}
+select_stmt         : SELECT opt_distinct select_expr_list_s FROM table_refs where_clause opt_order_by {
+                     	$$ = (select_info_t*)malloc(sizeof(select_info_t));
+                     	$$->distinct = $2;
+                     	$$->tables = $5;
+                     	$$->exprs  = $3;
+                     	$$->where  = $6;
+                     	$$->order_by = $7;  // $7 应该是 opt_order_by 返回的 order_by_item_t*（不是 linked_list_t*）
+                     }
+                     ;
+
+opt_distinct        : /* empty */ { $$ = 0; }
+					| DISTINCT    { $$ = 1; }
 					;
 
 table_refs          : table_refs ',' table_item {
@@ -263,6 +275,60 @@ aggregate_op        : SUM   { $$ = OPERATOR_SUM; }
 where_clause        : WHERE condition { $$ = $2; }
 					| /* empty */     { $$ = NULL; }
 					;
+
+opt_order_by        : /* empty */      { $$ = NULL; }
+                    | ORDER BY order_by_list { 
+                        // 将 linked_list_t 转换为 order_by_item_t 链表
+                        order_by_item_t *head = NULL;
+                        order_by_item_t *tail = NULL;
+                        linked_list_t *list = $3;
+                        
+                        while (list != NULL) {
+                            order_by_item_t *item = (order_by_item_t*)list->data;
+                            
+                            if (head == NULL) {
+                                head = tail = item;
+                            } else {
+                                tail->next = item;
+                                tail = item;
+                            }
+                            
+                            linked_list_t *next = list->next;
+                            free(list);  // 释放 linked_list_t 节点
+                            list = next;
+                        }
+                        
+                        $$ = head;
+                    }
+                    ;
+
+order_by_list       : order_by_item {
+                        $$ = (linked_list_t*)malloc(sizeof(linked_list_t));
+                        $$->data = $1;
+                        $$->next = NULL;
+                     }
+                     | order_by_list ',' order_by_item {
+                        $$ = (linked_list_t*)malloc(sizeof(linked_list_t));
+                        $$->data = $3;
+                        $$->next = $1;
+                     }
+                     ;
+
+order_by_item       : IDENTIFIER opt_asc_desc {
+                        order_by_item_t *item = (order_by_item_t*)calloc(1, sizeof(order_by_item_t));
+                        item->column_name = strdup($1);  // 使用 strdup 复制字符串
+                        item->ascending = $2;
+                        item->next = NULL;
+                        $$ = item;
+                     }
+                     ;
+
+
+
+opt_asc_desc        : /* empty */ { $$ = 1; }  // 默认升序
+                    | ASC         { $$ = 1; }
+                    | DESC        { $$ = 0; }
+                    ;
 
 table_extra_options : ',' table_extra_option_list  { $$ = $2; }
 					| /* empty */                  { $$ = NULL; }

@@ -86,6 +86,12 @@ typedef enum {
 	TERM_NULL
 } term_type_t;
 
+typedef struct order_by_item_t {
+	char* column_name;           // 排序的列名
+	int ascending;               // 是否升序 (1=升序, 0=降序)
+	struct order_by_item_t* next; // 下一个排序项
+} order_by_item_t;
+
 typedef struct field_item_t {
 	char *name;
 	int type, width, flags;
@@ -113,6 +119,8 @@ typedef struct insert_info_t {
 	char *table;
 	linked_list_t *columns, *values;
 } insert_info_t;
+
+typedef struct expr_node_t expr_node_t;
 
 typedef struct expr_node_t {
 	union {
@@ -147,8 +155,10 @@ typedef struct update_info_t {
 } update_info_t;
 
 typedef struct select_info_t {
+	int distinct;           
 	linked_list_t *tables, *exprs;
 	expr_node_t *where;
+	order_by_item_t* order_by;  // 添加这行：ORDER BY 子句
 } select_info_t;
 
 typedef struct table_join_info_t {

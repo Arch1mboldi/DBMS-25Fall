@@ -9,7 +9,12 @@ static const char* DEFAULT_LOG_PATH = "../../logs/trivialdb.log";
 static const char* DEFAULT_ERROR_LOG_PATH = "../../logs/trivialdb_error.log";
 
 Logger::Logger() 
-    : current_user("admin"),  // 写死为 admin，预留接口
+    // ========== 用户/权限系统接口预留 ==========
+    // 当前写死为 "admin"，实现用户系统后通过 set_current_user() 动态设置
+    // 未来扩展时，可在用户登录成功后调用:
+    //   Logger::get_instance()->set_current_user(authenticated_user);
+    : current_user("admin"),
+    // ========================================
       current_database(""),
       min_level(LogLevel::DEBUG),
       console_output(false),
@@ -239,6 +244,16 @@ void Logger::set_console_output(bool enabled)
     console_output = enabled;
 }
 
+// ========== 用户/权限系统接口预留 - 开始 ==========
+// 设置当前操作用户
+// 当前默认用户为 "admin"，实现用户认证系统后，在用户登录时调用此方法
+// 使用示例:
+//   // 用户登录成功后
+//   if (auth_system.login(username, password)) {
+//       Logger::get_instance()->set_current_user(username);
+//   }
+//   // 用户登出时
+//   Logger::get_instance()->set_current_user("anonymous");
 void Logger::set_current_user(const std::string& user)
 {
     current_user = user;
@@ -248,6 +263,7 @@ std::string Logger::get_current_user() const
 {
     return current_user;
 }
+// ========== 用户/权限系统接口预留 - 结束 ==========
 
 void Logger::set_current_database(const std::string& db)
 {

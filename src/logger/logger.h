@@ -73,7 +73,18 @@ private:
     std::ofstream error_log_file;   // 单独的错误日志
     std::string log_file_path;
     std::string error_log_file_path;
+    
+    // ========== 用户/权限系统接口预留 - 开始 ==========
+    // 当前用户名，默认为 "admin"
+    // TODO: 实现用户认证系统后，通过 set_current_user() 设置当前登录用户
+    // 可扩展字段:
+    //   - std::string current_role;      // 用户角色 (admin/user/guest)
+    //   - std::string session_id;        // 会话ID
+    //   - std::string client_ip;         // 客户端IP地址
+    //   - time_t login_time;             // 登录时间
     std::string current_user;        // 当前用户（预留接口）
+    // ========== 用户/权限系统接口预留 - 结束 ==========
+    
     std::string current_database;    // 当前数据库
     LogLevel min_level;              // 最小记录级别
     std::mutex log_mutex;            // 线程安全
@@ -104,9 +115,19 @@ public:
     void set_min_level(LogLevel level);
     void set_console_output(bool enabled);
     
-    // 用户接口（预留）
+    // ========== 用户/权限系统接口预留 - 开始 ==========
+    // 设置当前操作用户
+    // @param user: 用户名
+    // 使用示例（未来实现用户系统后）:
+    //   Logger::get_instance()->set_current_user(session.get_username());
+    // TODO: 可扩展方法:
+    //   void set_user_role(const std::string& role);
+    //   void set_session_id(const std::string& session_id);
+    //   void set_client_ip(const std::string& ip);
+    //   bool check_permission(OperationType op);  // 权限检查
     void set_current_user(const std::string& user);
     std::string get_current_user() const;
+    // ========== 用户/权限系统接口预留 - 结束 ==========
     
     // 数据库上下文
     void set_current_database(const std::string& db);

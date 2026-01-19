@@ -5,6 +5,7 @@
 #include "../expression/expression.h"
 #include "../utils/type_cast.h"
 #include "../table/record.h"
+#include "../logger/logger.h"
 #include <vector>
 #include <limits>
 #include <algorithm>
@@ -464,6 +465,10 @@ void dbms::switch_database(const char* db_name)
 
     cur_db = new database();
     cur_db->open(db_name);
+    
+    // 日志记录
+    Logger::get_instance()->log_database_op(OperationType::DB_USE, db_name, true, 
+        std::string("Switched to database '") + db_name + "'");
 }
 
 void dbms::create_database(const char* db_name)
@@ -471,6 +476,10 @@ void dbms::create_database(const char* db_name)
     database db;
     db.create(db_name);
     db.close();
+    
+    // 日志记录
+    Logger::get_instance()->log_database_op(OperationType::DB_CREATE, db_name, true,
+        std::string("Database '") + db_name + "' created successfully");
 }
 
 void dbms::drop_database(const char* db_name)
@@ -485,6 +494,10 @@ void dbms::drop_database(const char* db_name)
     database db;
     db.open(db_name);
     db.drop();
+    
+    // 日志记录
+    Logger::get_instance()->log_database_op(OperationType::DB_DROP, db_name, true,
+        std::string("Database '") + db_name + "' dropped successfully");
 }
 
 void dbms::show_database(const char* db_name)
@@ -492,12 +505,19 @@ void dbms::show_database(const char* db_name)
     database db;
     db.open(db_name);
     db.show_info();
+    
+    // 日志记录
+    Logger::get_instance()->log_database_op(OperationType::DB_SHOW, db_name, true);
 }
 
 void dbms::drop_table(const char* table_name)
 {
-    if (assert_db_open())
+    if (assert_db_open()) {
         cur_db->drop_table(table_name);
+        // 日志记录
+        Logger::get_instance()->log_table_op(OperationType::TABLE_DROP, table_name, true,
+            std::string("Table '") + table_name + "' dropped successfully");
+    }
 }
 
 void dbms::show_table(const char* table_name)
@@ -508,54 +528,95 @@ void dbms::show_table(const char* table_name)
         if (tm == nullptr)
         {
             std::fprintf(stderr, "[Error] Table `%s` not found.\n", table_name);
+            // 日志记录失败
+            Logger::get_instance()->log_table_op(OperationType::TABLE_SHOW, table_name, false,
+                std::string("Table '") + table_name + "' not found");
         }
         else {
             tm->dump_table_info();
+            // 日志记录成功
+            Logger::get_instance()->log_table_op(OperationType::TABLE_SHOW, table_name, true);
         }
     }
 }
 
 void dbms::create_table(const table_header_t* header)
 {
-    if (assert_db_open())
+    if (assert_db_open()) {
         cur_db->create_table(header);
+        // 日志记录
+        Logger::get_instance()->log_table_op(OperationType::TABLE_CREATE, header->table_name, true,
+            std::string("Table '") + header->table_name + "' created with " + 
+            std::to_string(header->col_num) + " columns");
+    }
 }
 
 void dbms::rename_table(const char* old_name, const char* new_name)
 {
-    if (assert_db_open())
+    if (assert_db_open()) {
         cur_db->rename_table(old_name, new_name);
+        // 日志记录
+        std::string sql = Logger::format_rename_table_sql(old_name, new_name);
+        Logger::get_instance()->log(LogLevel::INFO, OperationType::TABLE_RENAME, sql, true,
+            std::string("Table '") + old_name + "' renamed to '" + new_name + "'", old_name);
+    }
 }
 
 void dbms::alter_table_add_column(const char* table_name, const field_item_t* field)
 {
-    if (assert_db_open())
+    if (assert_db_open()) {
         cur_db->alter_table_add_column(table_name, field);
+        // 日志记录
+        std::string sql = Logger::format_alter_add_sql(table_name, field->name);
+        Logger::get_instance()->log(LogLevel::INFO, OperationType::TABLE_ALTER_ADD, sql, true,
+            std::string("Column '") + field->name + "' added to table '" + table_name + "'", table_name);
+    }
 }
 
 void dbms::alter_table_drop_column(const char* table_name, const char* column_name)
 {
-    if (assert_db_open())
+    if (assert_db_open()) {
         cur_db->alter_table_drop_column(table_name, column_name);
+        // 日志记录
+        std::string sql = Logger::format_alter_drop_sql(table_name, column_name);
+        Logger::get_instance()->log(LogLevel::INFO, OperationType::TABLE_ALTER_DROP, sql, true,
+            std::string("Column '") + column_name + "' dropped from table '" + table_name + "'", table_name);
+    }
 }
 void dbms::alter_table_modify_column(const char* table_name, const field_item_t* field)
 {
     if (!cur_db) {
         std::fprintf(stderr, "[Error] No database selected.\n");
+        // 日志记录失败
+        Logger::get_instance()->log_error(OperationType::TABLE_ALTER_MODIFY, 
+            Logger::format_alter_modify_sql(table_name, field ? field->name : "unknown"),
+            "No database selected");
         return;
     }
-
+    
     cur_db->alter_table_modify_column(table_name, field);
+    // 日志记录成功
+    std::string sql = Logger::format_alter_modify_sql(table_name, field->name);
+    Logger::get_instance()->log(LogLevel::INFO, OperationType::TABLE_ALTER_MODIFY, sql, true,
+        std::string("Column '") + field->name + "' modified in table '" + table_name + "'", table_name);
 }
 
 void dbms::alter_table_rename_column(const char* table_name, const char* old_name, const char* new_name)
 {
     if (!cur_db) {
         std::fprintf(stderr, "[Error] No database selected.\n");
+        // 日志记录失败
+        Logger::get_instance()->log_error(OperationType::TABLE_ALTER_RENAME,
+            Logger::format_alter_rename_sql(table_name, old_name, new_name),
+            "No database selected");
         return;
     }
-
+    
     cur_db->alter_table_rename_column(table_name, old_name, new_name);
+    // 日志记录成功
+    std::string sql = Logger::format_alter_rename_sql(table_name, old_name, new_name);
+    Logger::get_instance()->log(LogLevel::INFO, OperationType::TABLE_ALTER_RENAME, sql, true,
+        std::string("Column '") + old_name + "' renamed to '" + new_name + "' in table '" + table_name + "'", table_name);
 }
 
 void dbms::update_rows(const update_info_t* info)
@@ -595,13 +656,23 @@ void dbms::update_rows(const update_info_t* info)
     }
     catch (const char* msg) {
         std::puts(msg);
+        // 日志记录异常
+        Logger::get_instance()->log_exception("dbms::update_rows", msg);
         return;
     }
     catch (...) {
+        // 日志记录未知异常
+        Logger::get_instance()->log_exception("dbms::update_rows", "Unknown exception");
     }
 
     std::printf("[Info] %d row(s) updated, %d row(s) failed.\n",
         succ_count, fail_count);
+    
+    // 日志记录
+    std::string sql = Logger::format_update_sql(info->table, info->column_ref->column);
+    Logger::get_instance()->log_data_op(OperationType::DATA_UPDATE, info->table, sql, 
+        (fail_count == 0), succ_count,
+        fail_count > 0 ? std::to_string(fail_count) + " row(s) failed" : "");
 }
 
 void dbms::select_rows(const select_info_t* info)
@@ -1148,6 +1219,11 @@ void dbms::select_rows(const select_info_t* info)
         std::fprintf(output_file, "\n");
         std::fflush(output_file);
     }
+    
+    // 日志记录（获取第一个表名）
+    table_join_info_t *first_table = (table_join_info_t*)info->tables->data;
+    std::string sql = Logger::format_select_sql(first_table->table);
+    Logger::get_instance()->log_data_op(OperationType::DATA_SELECT, first_table->table, sql, true, 0);
 }
 
 void dbms::select_rows_aggregate(
@@ -1295,6 +1371,10 @@ void dbms::delete_rows(const delete_info_t* info)
     for (int rid : delete_list)
         counter += tm->remove_record(rid);
     std::printf("[Info] %d row(s) deleted.\n", counter);
+    
+    // 日志记录
+    std::string sql = Logger::format_delete_sql(info->table);
+    Logger::get_instance()->log_data_op(OperationType::DATA_DELETE, info->table, sql, true, counter);
 }
 
 void dbms::insert_rows(const insert_info_t* info)
@@ -1379,10 +1459,20 @@ void dbms::insert_rows(const insert_info_t* info)
     }
 
     std::printf("[Info] %d row(s) inserted, %d row(s) failed.\n", count_succ, count_fail);
+    
+    // 日志记录
+    std::string sql = Logger::format_insert_sql(info->table, count_succ);
+    Logger::get_instance()->log_data_op(OperationType::DATA_INSERT, info->table, sql,
+        (count_fail == 0), count_succ,
+        count_fail > 0 ? std::to_string(count_fail) + " row(s) failed" : "");
 }
 
 void dbms::drop_index(const char* tb_name, const char* col_name)
 {
+	// 日志记录
+	std::string sql = Logger::format_drop_index_sql(tb_name, col_name);
+	Logger::get_instance()->log(LogLevel::INFO, OperationType::INDEX_DROP, sql, true,
+		std::string("Index on ") + tb_name + "(" + col_name + ") dropped", tb_name);
 }
 
 void dbms::create_index(const char* tb_name, const char* col_name)
@@ -1393,9 +1483,17 @@ void dbms::create_index(const char* tb_name, const char* col_name)
     if (tb == nullptr)
     {
         std::fprintf(stderr, "[Error] table `%s` not exists.\n", tb_name);
+        // 日志记录失败
+        Logger::get_instance()->log_error(OperationType::INDEX_CREATE,
+            Logger::format_create_index_sql(tb_name, col_name),
+            std::string("Table '") + tb_name + "' not exists");
     }
     else {
         tb->create_index(col_name);
+        // 日志记录成功
+        std::string sql = Logger::format_create_index_sql(tb_name, col_name);
+        Logger::get_instance()->log(LogLevel::INFO, OperationType::INDEX_CREATE, sql, true,
+            std::string("Index created on ") + tb_name + "(" + col_name + ")", tb_name);
     }
 }
 

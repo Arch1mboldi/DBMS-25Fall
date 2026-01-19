@@ -23,6 +23,7 @@ set(SOURCE
 	src/expression/expression.cpp
 	src/expression/serialization.cpp
 	src/index/index.cpp
+	src/logger/logger.cpp
 )
 
 set(HEADERS

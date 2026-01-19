@@ -4,6 +4,7 @@
 #include "../database/dbms.h"
 #include "../table/table_header.h"
 #include "../expression/expression.h"
+#include "../logger/logger.h"
 
 template<typename T, typename DataDeleter>
 void free_linked_list(linked_list_t *linked_list, DataDeleter data_deleter)
@@ -193,6 +194,8 @@ void execute_drop_index(const char *table_name, const char *col_name)
 
 void execute_quit()
 {
+	// 日志记录系统退出
+	Logger::get_instance()->log(LogLevel::INFO, OperationType::SYSTEM_QUIT, "EXIT;", true, "TrivialDB session ended");
 	dbms::get_instance()->close_database();
 	printf("[exit] good bye!\n");
 }

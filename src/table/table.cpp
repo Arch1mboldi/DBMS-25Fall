@@ -580,16 +580,20 @@ void table_manager::close()
 
 	if(!is_mirror)
 	{
-	// 文件存储在项目根目录的database/文件夹下
-	std::string thead = "../../database/" + tname + ".thead";
-	std::string tdata = "../../database/" + tname + ".tdata";
+		// 文件存储在项目根目录的database/文件夹下
+		std::string thead = "../../database/" + tname + ".thead";
+		std::string tdata = "../../database/" + tname + ".tdata";
 
 		header.index_root[header.main_index] = btr->get_root_page_id();
 		free_indices();
 		free_check_constraints();
 
+		// 正确保存表头文件
 		std::ofstream ofs(thead, std::ios::binary);
-		ofs.write((char*)&header, sizeof(header));
+		if(ofs) {
+			ofs.write((char*)&header, sizeof(header));
+			ofs.close();  // 确保立即关闭文件
+		}
 		pg->close();
 	}
 

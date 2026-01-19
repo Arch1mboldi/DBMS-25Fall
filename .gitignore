@@ -44,3 +44,9 @@ sql.yy.c
 # Log files
 logs/
 *.log
+
+# Database files
+database/
+*.database
+*.tdata
+*.thead
